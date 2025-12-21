@@ -1,0 +1,19 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+.env
+
+# Data Files (Δεν τα ανεβάζουμε στο git)
+data/
+results/
+
+# Embeddings & Models (Μεγάλα αρχεία)
+*.npy
+*.pickle
+*.pkl
+*.index
+*.pt
+*.bin
