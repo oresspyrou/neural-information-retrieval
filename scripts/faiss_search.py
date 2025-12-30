@@ -34,7 +34,7 @@ def run_search() -> None:
     set_seed(42)
     logger.info("Starting Semantic Search pipeline...")
 
-    logger.info(" Running validation checks...")
+    logger.info("Running validation checks...")
     try:
         validate_input_file(config.QUERIES_PATH)
         validate_csv_columns(config.QUERIES_PATH, required_columns=['ID', 'Text'])
@@ -51,12 +51,12 @@ def run_search() -> None:
         logger.info(f"Loaded {len(doc_ids)} document vectors.")
 
         logger.info(f"Loading queries from: {config.QUERIES_PATH}")
-        queries_df = pd.read_csv(config.QUERIES_PATH)
+        queries_df: pd.DataFrame = pd.read_csv(config.QUERIES_PATH)
         
         queries_df['Text'] = queries_df['Text'].apply(clean_text)
         
-        query_ids = queries_df['ID'].tolist()
-        query_texts = queries_df['Text'].tolist()
+        query_ids: List[str] = queries_df['ID'].tolist()
+        query_texts: List[str] = queries_df['Text'].tolist()
         logger.info(f"Loaded and preprocessed {len(query_texts)} queries.")
 
     except Exception as e:
@@ -65,10 +65,10 @@ def run_search() -> None:
 
     try:
         logger.info(f"Loading model: {config.MODEL_NAME}...")
-        model = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
+        model: SentenceTransformer = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
 
         logger.info("Encoding queries to vectors...")
-        query_embeddings = model.encode(
+        query_embeddings: np.ndarray = model.encode(
             query_texts, 
             show_progress_bar=True, 
             batch_size=config.BATCH_SIZE
@@ -79,33 +79,33 @@ def run_search() -> None:
         doc_embeddings = doc_embeddings.astype('float32')
         query_embeddings = query_embeddings.astype('float32')
         
-        # Διαστάσεις διανυσμάτων
-        dimension = doc_embeddings.shape[1]
+        # Dimensions of vectors
+        dimension: int = doc_embeddings.shape[1]
         
         index = faiss.IndexFlatL2(dimension)
         index.add(doc_embeddings)
         
         logger.info(f"Searching for top {max(config.TOP_K_VALUES)} results per query...")
         
-        k = max(config.TOP_K_VALUES)
+        k: int = max(config.TOP_K_VALUES)
         D, I = index.search(query_embeddings, k)
 
         logger.info("Formatting results...")
-        results = {}
+        results: Dict[str, List[Tuple[str, float]]] = {}
         
         for q_idx, neighbors in enumerate(I):
-            q_id = str(query_ids[q_idx]) 
+            q_id: str = str(query_ids[q_idx]) 
             
-            retrieved_docs = []
+            retrieved_docs: List[Tuple[str, float]] = []
             for i, doc_idx in enumerate(neighbors):
-                score = float(D[q_idx][i])     
-                real_doc_id = str(doc_ids[doc_idx])
+                score: float = float(D[q_idx][i])     
+                real_doc_id: str = str(doc_ids[doc_idx])
                 
                 retrieved_docs.append((real_doc_id, score))
             
             results[q_id] = retrieved_docs
 
-        output_path = os.path.join(config.RESULTS_DIR, "search_results.pkl")
+        output_path: str = os.path.join(config.RESULTS_DIR, "search_results.pkl")
         logger.info(f"Saving results to: {output_path}")
         
         with open(output_path, "wb") as f:
