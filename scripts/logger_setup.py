@@ -2,7 +2,8 @@ import logging
 import os
 import sys
 
-from .. import config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
 from scripts.validator import ensure_directory_exists
 
 
