@@ -31,8 +31,8 @@ def validate_csv_columns(filepath: str, required_columns: List[str]) -> bool:
         required_columns (List[str]): List of column names that must exist.
     """
     try:
-        df = pd.read_csv(filepath, nrows=0)
-        missing = [col for col in required_columns if col not in df.columns]
+        df: pd.DataFrame = pd.read_csv(filepath, nrows=0)
+        missing: List[str] = [col for col in required_columns if col not in df.columns]
 
         if missing:
             raise ValueError(f"The columns: {missing} are missing from {os.path.basename(filepath)}")

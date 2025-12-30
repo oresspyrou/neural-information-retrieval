@@ -6,7 +6,7 @@ from .. import config
 from scripts.validator import ensure_directory_exists
 
 
-def setup_logger():
+def setup_logger() -> logging.Logger:
     """
     Configures and returns a logger instance.
     Uses validator to ensure logs directory exists.

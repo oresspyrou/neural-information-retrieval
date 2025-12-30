@@ -1,6 +1,8 @@
 import sys
 import os
+from typing import List
 import pandas as pd
+import numpy as np
 from sentence_transformers import SentenceTransformer
 import pickle
 
@@ -16,7 +18,7 @@ except RuntimeError as e:
     print(f"CRITICAL: Logger setup failed: {e}")
     sys.exit(1)
 
-def create_embeddings():
+def create_embeddings() -> None:
     """
     Generates embeddings for documents using a SentenceTransformer model.
 
@@ -44,17 +46,17 @@ def create_embeddings():
 
     try:
         logger.info(f"Loading texts from: {config.DOCUMENTS_PATH}")
-        df = pd.read_csv(config.DOCUMENTS_PATH)
+        df: pd.DataFrame = pd.read_csv(config.DOCUMENTS_PATH)
         
-        doc_ids = df['ID'].tolist()
-        texts = df['Text'].tolist()
+        doc_ids: List[str] = df['ID'].tolist()
+        texts: List[str] = df['Text'].tolist()
         logger.info(f"Loaded {len(texts)} documents.")
 
         logger.info(f"Loading model: {config.MODEL_NAME}...")
-        model = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
+        model: SentenceTransformer = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
 
         logger.info("Encoding documents...")
-        embeddings = model.encode(
+        embeddings: np.ndarray = model.encode(
             texts, 
             show_progress_bar=True, 
             batch_size=config.BATCH_SIZE
@@ -69,7 +71,7 @@ def create_embeddings():
         logger.info(f"Shape: {embeddings.shape}")
 
     except Exception as e:
-        logger.critical(f"🔥 Unexpected Runtime Error: {e}", exc_info=True)
+        logger.critical(f"Unexpected Runtime Error: {e}", exc_info=True)
 
 if __name__ == "__main__":
     try:
