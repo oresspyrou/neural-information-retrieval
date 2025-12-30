@@ -3,14 +3,18 @@ import os
 import sys
 
 from .. import config
+from scripts.validator import ensure_directory_exists
 
 
 def setup_logger():
+    """
+    Configures and returns a logger instance.
+    Uses validator to ensure logs directory exists.
+    """
     try:
-        if not os.path.exists(config.LOGS_DIR):
-            os.makedirs(config.LOGS_DIR)
-    except OSError as e:
-        raise RuntimeError(f"Failed to create logs directory: {e}")
+        ensure_directory_exists(config.LOGS_DIR)
+    except Exception as e:
+        raise RuntimeError(f"Failed to ensure logs directory exists: {e}")
 
     logger = logging.getLogger('pipeline_logger')
     logger.setLevel(logging.DEBUG)
