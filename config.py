@@ -44,3 +44,6 @@ DEVICE = get_device()
 # --- ΡΥΘΜΙΣΕΙΣ ΑΝΑΖΗΤΗΣΗΣ (SEARCH CONFIG) ---
 # Τα k για τα οποία θα τρέξουμε αξιολόγηση
 TOP_K_VALUES = [20, 30, 50]
+
+LOGS_DIR = os.path.join(BASE_DIR, "logs")
+LOG_FILE = os.path.join(LOGS_DIR, "pipeline.log")
