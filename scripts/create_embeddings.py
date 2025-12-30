@@ -6,43 +6,62 @@ import pickle
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import config  
+import config
+from scripts.logger_setup import setup_logger
+from scripts.validator import validate_input_file, validate_csv_columns, ensure_directory_exists
+
+try:
+    logger = setup_logger()
+except RuntimeError as e:
+    print(f"CRITICAL: Logger setup failed: {e}")
+    sys.exit(1)
 
 def create_embeddings():
+    logger.info("Starting embedding generation pipeline...")
 
-    if not os.path.exists(config.DOCUMENTS_PATH):
-        print(f"Error: File {config.DOCUMENTS_PATH} not found.")
+    try:
+        validate_input_file(config.DOCUMENTS_PATH)
+        validate_csv_columns(config.DOCUMENTS_PATH, required_columns=['ID', 'Text'])
+        ensure_directory_exists(config.EMBEDDINGS_DIR)
+    except (FileNotFoundError, PermissionError, ValueError, OSError) as e:
+        logger.error(f"Validation Error: {e}")
         return
-
-    print("Creating embeddings...")
-    print(f"Model: {config.MODEL_NAME}")
-    print(f"Device: {config.DEVICE}")
-
-    print(f"Loading texts from: {config.DOCUMENTS_PATH}")
-    df = pd.read_csv(config.DOCUMENTS_PATH)
     
-    doc_ids = df['ID'].tolist()
-    texts = df['Text'].tolist()
-    print(f"Loaded {len(texts)} documents.")
+    logger.info("Creating embeddings...")
+    logger.info(f"Model: {config.MODEL_NAME}")
+    logger.info(f"Device: {config.DEVICE}")
 
-    model = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
+    try:
+        logger.info(f"Loading texts from: {config.DOCUMENTS_PATH}")
+        df = pd.read_csv(config.DOCUMENTS_PATH)
+        
+        doc_ids = df['ID'].tolist()
+        texts = df['Text'].tolist()
+        logger.info(f"Loaded {len(texts)} documents.")
 
-    print("Encoding documents...")
-    embeddings = model.encode(
-        texts, 
-        show_progress_bar=True, 
-        batch_size=config.BATCH_SIZE
-    )
+        logger.info(f"Loading model: {config.MODEL_NAME}...")
+        model = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
 
-    # 5. Αποθήκευση
-    print("Saving embeddings...")
-    os.makedirs(config.EMBEDDINGS_DIR, exist_ok=True)
-    
-    with open(config.DOC_EMBEDDINGS_PATH, "wb") as f:
-        pickle.dump({'ids': doc_ids, 'embeddings': embeddings}, f)
+        logger.info("Encoding documents...")
+        embeddings = model.encode(
+            texts, 
+            show_progress_bar=True, 
+            batch_size=config.BATCH_SIZE
+        )
 
-    print(f"Saved embeddings to: {config.DOC_EMBEDDINGS_PATH}")
-    print(f"Shape: {embeddings.shape}")
+        logger.info("Saving embeddings...")
+        
+        with open(config.DOC_EMBEDDINGS_PATH, "wb") as f:
+            pickle.dump({'ids': doc_ids, 'embeddings': embeddings}, f)
+
+        logger.info(f"Saved embeddings to: {config.DOC_EMBEDDINGS_PATH}")
+        logger.info(f"Shape: {embeddings.shape}")
+
+    except Exception as e:
+        logger.critical(f"🔥 Unexpected Runtime Error: {e}", exc_info=True)
 
 if __name__ == "__main__":
-    create_embeddings()
+    try:
+        create_embeddings()
+    except KeyboardInterrupt:
+        logger.warning("Process interrupted by user (Ctrl+C).")
