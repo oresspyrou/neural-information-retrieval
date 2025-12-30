@@ -12,6 +12,9 @@ import config
 from scripts.logger_setup import setup_logger
 from scripts.validator import validate_input_file, validate_csv_columns, ensure_directory_exists
 
+from scripts.utils import set_seed
+from scripts.preprocessing import clean_text
+
 try:
     logger = setup_logger()
 except RuntimeError as e:
@@ -21,16 +24,9 @@ except RuntimeError as e:
 def create_embeddings() -> None:
     """
     Generates embeddings for documents using a SentenceTransformer model.
-
-    This function validates input files and directories, loads documents from a CSV,
-    encodes them into embeddings, and saves the results to a pickle file.
-
-    Logs progress and errors throughout the process. If validation fails, the function
-    returns early without processing.
-
-    Raises:
-        No exceptions are raised directly; errors are logged and handled internally.
+    Includes data cleaning and reproducibility steps.
     """
+    set_seed(42)
 
     try:
         validate_input_file(config.DOCUMENTS_PATH)
@@ -40,7 +36,7 @@ def create_embeddings() -> None:
         logger.error(f"Validation Error: {e}")
         return
     
-    logger.info("Creating embeddings...")
+    logger.info("Starting embedding generation pipeline...")
     logger.info(f"Model: {config.MODEL_NAME}")
     logger.info(f"Device: {config.DEVICE}")
 
@@ -48,9 +44,12 @@ def create_embeddings() -> None:
         logger.info(f"Loading texts from: {config.DOCUMENTS_PATH}")
         df: pd.DataFrame = pd.read_csv(config.DOCUMENTS_PATH)
         
+        logger.info("Preprocessing texts (cleaning whitespace/formatting)...")
+        df['Text'] = df['Text'].apply(clean_text)
+        
         doc_ids: List[str] = df['ID'].tolist()
         texts: List[str] = df['Text'].tolist()
-        logger.info(f"Loaded {len(texts)} documents.")
+        logger.info(f"Loaded and cleaned {len(texts)} documents.")
 
         logger.info(f"Loading model: {config.MODEL_NAME}...")
         model: SentenceTransformer = SentenceTransformer(config.MODEL_NAME, device=config.DEVICE)
