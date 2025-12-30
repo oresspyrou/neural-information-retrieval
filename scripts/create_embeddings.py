@@ -17,7 +17,18 @@ except RuntimeError as e:
     sys.exit(1)
 
 def create_embeddings():
-    logger.info("Starting embedding generation pipeline...")
+    """
+    Generates embeddings for documents using a SentenceTransformer model.
+
+    This function validates input files and directories, loads documents from a CSV,
+    encodes them into embeddings, and saves the results to a pickle file.
+
+    Logs progress and errors throughout the process. If validation fails, the function
+    returns early without processing.
+
+    Raises:
+        No exceptions are raised directly; errors are logged and handled internally.
+    """
 
     try:
         validate_input_file(config.DOCUMENTS_PATH)
